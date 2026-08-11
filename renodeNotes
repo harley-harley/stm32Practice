@@ -1,0 +1,44 @@
+cmake notes
+cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/gcc-arm-none-eabi.cmake -G Ninja ..
+cmake --build .
+
+intialize machine
+include @platforms/boards/nucleo_h753zi.repl 
+
+load elf
+sysbus LoadELF @Projects/port/wakeUp/initialCopyPaste/build/initialCopyPaste.elf
+
+start
+start
+
+"stop"
+pause
+Clear
+
+
+onboard stuff
+
+sample log
+logLevel -1 gpioPortE.YellowLED
+
+sample monitor
+showAnalyzer sysbus.usart3
+
+sample button
+sysbus.gpioPortC.UserButton1 Press
+
+volts in adc
+sysbus.adcM1S2.adcM1S2-channel1 Volts 1
+
+adcM1S2: Analog.STM32H7_ADC @ sysbus 0x40022000
+#define ADC12_COMMON_BASE       (D2_AHB1PERIPH_BASE + 0x2300UL)
+#define D2_AHB1PERIPH_BASE       (PERIPH_BASE + 0x00020000UL)
+#define PERIPH_BASE               (0x40000000UL) /*!< Base address of : AHB/APB Peripherals                                                   */
+# 40022300
+#define ADC1_BASE               (D2_AHB1PERIPH_BASE + 0x2000UL)
+#define ADC2_BASE               (D2_AHB1PERIPH_BASE + 0x2100UL)
+
+
+sample attaching EXISITING peripheral (temperature sensor) without adding new file
+machine LoadPlatformDescriptionFromString "tmp103: Sensors.TMP103 @ i2c1 0x70"
+sysbus.i2c1.tmp103 Temperature 30.0
