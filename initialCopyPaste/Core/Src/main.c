@@ -171,19 +171,22 @@ int main(void) {
 #include <stdio.h>
 #include <string.h>
 
+  // To implement
+  //   int8_t spi_status;
   uint8_t buf[64];
   char spi_buf[64];
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
   HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_WRITE_ENABLE, 1, 1000);
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
-  // PROBABLY CHECK STATUS
 
-  //   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
-  //   HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
-  //   HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 1, 1000);
-  //   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
-  //   sprintf((char *)buf, "spi status 0x%x\r\n", (unsigned int)spi_buf[0]);
-  //   HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
+  // HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
+  // HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 1, 1000);
+  HAL_SPI_TransmitReceive(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER,
+                          (uint8_t *)spi_buf, 2, 1000);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
+  sprintf((char *)buf, "spi status 0x%x\r\n", (unsigned int)spi_buf[0]);
+  HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
 
   // strcpy((char *)buf, "Hello!\r\n");
 
@@ -218,8 +221,10 @@ int main(void) {
 
   while (wip) {
     HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
-    HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
-    HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 1, 1000);
+    // HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
+    // HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 1, 1000);
+    HAL_SPI_TransmitReceive(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER,
+                            (uint8_t *)spi_buf, 2, 1000);
     HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
 
     wip = spi_buf[0] & 0x01;
@@ -231,7 +236,6 @@ int main(void) {
   //   HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 3, 1000);
   uint8_t read_message[] = {MT25_READ, 0x00, 0x00, 0x00, 0x05};
   HAL_SPI_TransmitReceive(&hspi4, read_message, (uint8_t *)spi_buf, 8, 1000);
-  HAL_SPI_Transmit(&hspi4, read_message, 5, 1000);
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
   sprintf((char *)buf, "spibuf after example 0x%x 0x%x 0x%x\r\n",
           (unsigned int)spi_buf[5], (unsigned int)spi_buf[6],
