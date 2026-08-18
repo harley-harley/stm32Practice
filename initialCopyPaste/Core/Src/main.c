@@ -184,6 +184,8 @@ int main(void) {
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
 
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
+  // renode seems to get upset when using multiple transmits after another
+  // which is why more things are bunched together into one liners
   // HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
   // HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 1, 1000);
   HAL_SPI_TransmitReceive(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER,

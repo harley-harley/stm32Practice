@@ -1,3 +1,5 @@
 cmake
 cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/gcc-arm-none-eabi.cmake -G Ninja ..
 cmake --build .
+
+cargo build --target=armv7r-none-eabi
