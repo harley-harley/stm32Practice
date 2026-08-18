@@ -42,3 +42,6 @@ adcM1S2: Analog.STM32H7_ADC @ sysbus 0x40022000
 sample attaching EXISITING peripheral (temperature sensor) without adding new file
 machine LoadPlatformDescriptionFromString "tmp103: Sensors.TMP103 @ i2c1 0x70"
 sysbus.i2c1.tmp103 Temperature 30.0
+
+
+machine LoadPlatformDescriptionFromString "mapped: Memory.MappedMemory { size: 0x00800000 }; mt25q: SPI.Micron_MT25Q @ spi4 { underlyingMemory: mapped }. gpioPortE: {4 -> mt25q@0}"

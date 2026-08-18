@@ -19,12 +19,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32h7xx_hal_spi.h"
-#include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-char msg[] = "ahhhhhhh ahhhhhhhhhhh ahhh ahh hahhhhahhhhhhh hhhhhaaaa "
-             "ahhhhhhhhhh ahh ah a\r\n";
+char msg[] = "ahhhhhhh ahhhhhhhhhh ahh ah a\r\n";
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,7 +53,7 @@ UART_HandleTypeDef hlpuart1;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_tx;
 
-SPI_HandleTypeDef hspi1;
+SPI_HandleTypeDef hspi4;
 
 /* USER CODE BEGIN PV */
 uint16_t adc_buf[ADC_BUF_LEN];
@@ -79,7 +77,7 @@ static void MX_I2C1_Init(void);
 static void MX_LPUART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
-static void MX_SPI1_Init(void);
+static void MX_SPI4_Init(void);
 /* USER CODE BEGIN PFP */
 void DMATransferComplete(DMA_HandleTypeDef *dma);
 /* USER CODE END PFP */
@@ -99,15 +97,13 @@ int main(void) {
 
   /* USER CODE END 1 */
 
-  /* MPU
-   * Configuration--------------------------------------------------------*/
+  /* MPU Configuration--------------------------------------------------------*/
   MPU_Config();
 
-  /* MCU
-   * Configuration--------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the
-   * Systick. */
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick.
+   */
   HAL_Init();
 
   /* USER CODE BEGIN Init */
@@ -128,7 +124,7 @@ int main(void) {
   MX_LPUART1_UART_Init();
   MX_USART2_UART_Init();
   MX_ADC1_Init();
-  MX_SPI1_Init();
+  MX_SPI4_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_DMA_RegisterCallback(&hdma_usart2_tx, HAL_DMA_XFER_CPLT_CB_ID,
@@ -142,8 +138,8 @@ int main(void) {
   BSP_LED_Init(LED_YELLOW);
   BSP_LED_Init(LED_RED);
 
-  /* Initialize USER push-button, will be used to trigger an interrupt each
-   * time it's pressed.*/
+  /* Initialize USER push-button, will be used to trigger an interrupt each time
+   * it's pressed.*/
   BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
 
   /* Initialize COM1 port (115200, 8 bits (7-bit data + 1 stop bit), no parity
@@ -159,8 +155,9 @@ int main(void) {
 
   /* USER CODE BEGIN BSP */
 
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
   /* -- Sample board code to send message over COM1 port ---- */
-  printf("Welcome to STM32 world !\n\r");
+  printf("Welcome to STM32 world !\r\n");
 
   /* -- Sample board code to switch on leds ---- */
   BSP_LED_On(LED_GREEN);
@@ -176,48 +173,76 @@ int main(void) {
 
   uint8_t buf[64];
   char spi_buf[64];
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)&MT25_WRITE_ENABLE, 1, 1000);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
+  HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_WRITE_ENABLE, 1, 1000);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
   // PROBABLY CHECK STATUS
 
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
-  HAL_SPI_Receive(&hspi1, (uint8_t *)spi_buf, 1, 1000);
-  sprintf((char *)buf, "spi status 0x%02x\r\n", spi_buf[0]);
-  HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
+  //   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
+  //   HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
+  //   HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 1, 1000);
+  //   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
+  //   sprintf((char *)buf, "spi status 0x%x\r\n", (unsigned int)spi_buf[0]);
+  //   HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
 
   // strcpy((char *)buf, "Hello!\r\n");
 
-  uint8_t addr;
+  //   uint8_t addr[4] = {0x00, 0x00, 0x00, 0x05};
   uint8_t wip = 1;
   spi_buf[0] = 0xAB;
   spi_buf[1] = 0xCD;
   spi_buf[2] = 0xEF;
-  addr = 0x05;
 
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)&MT25_WRITE, 1, 1000);
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)&addr, 1, 1000);
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)spi_buf, 1, 1000);
+  sprintf((char *)buf, "spibuf before example 0x%x 0x%x 0x%x\r\n",
+          (unsigned int)spi_buf[0], (unsigned int)spi_buf[1],
+          (unsigned int)spi_buf[2]);
+  HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
+
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
+  //   HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_WRITE, 1, 1000);
+  //   HAL_SPI_Transmit(&hspi4, (uint8_t *)addr, 4, 1000);
+  //   HAL_SPI_Transmit(&hspi4, (uint8_t *)spi_buf, 3, 1000);
+  uint8_t write_message[] = {MT25_WRITE, 0x00,       0x00,       0x00,
+                             0x05,       spi_buf[0], spi_buf[1], spi_buf[2]};
+  HAL_SPI_Transmit(&hspi4, write_message, 8, 1000);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
 
   spi_buf[0] = 0x00;
   spi_buf[1] = 0x00;
   spi_buf[2] = 0x00;
 
+  sprintf((char *)buf, "spibuf cleared 0x%x 0x%x 0x%x\r\n",
+          (unsigned int)spi_buf[0], (unsigned int)spi_buf[1],
+          (unsigned int)spi_buf[2]);
+  HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
+
   while (wip) {
-    HAL_SPI_Transmit(&hspi1, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
-    HAL_SPI_Receive(&hspi1, (uint8_t *)spi_buf, 1, 1000);
+    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
+    HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
+    HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 1, 1000);
+    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
 
     wip = spi_buf[0] & 0x01;
   }
 
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)&MT25_READ, 1, 1000);
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)&addr, 1, 1000);
-  HAL_SPI_Receive(&hspi1, (uint8_t *)&spi_buf, 3, 1000);
-  sprintf((char *)buf, "spi status 123 after example 0x%02x 0x%02x 0x%02x\r\n",
-          spi_buf[0], spi_buf[1], spi_buf[2]);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
+  //   HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_READ, 1, 1000);
+  //   HAL_SPI_Transmit(&hspi4, (uint8_t *)addr, 4, 1000);
+  //   HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 3, 1000);
+  uint8_t read_message[] = {MT25_READ, 0x00, 0x00, 0x00, 0x05};
+  HAL_SPI_TransmitReceive(&hspi4, read_message, (uint8_t *)spi_buf, 8, 1000);
+  HAL_SPI_Transmit(&hspi4, read_message, 5, 1000);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
+  sprintf((char *)buf, "spibuf after example 0x%x 0x%x 0x%x\r\n",
+          (unsigned int)spi_buf[5], (unsigned int)spi_buf[6],
+          (unsigned int)spi_buf[7]);
   HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
 
-  HAL_SPI_Transmit(&hspi1, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
-  HAL_SPI_Receive(&hspi1, (uint8_t *)spi_buf, 1, 1000);
-  sprintf((char *)buf, "spi should be clear status 0x%02x\r\n", spi_buf[0]);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
+  HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
+  HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 1, 1000);
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
+  sprintf((char *)buf, "spi clear status 0x%x\r\n", spi_buf[0]);
   HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
 
   static const uint8_t TMP103_ADDR = 0x70 << 1;
@@ -269,7 +294,7 @@ int main(void) {
 
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
 
-    sprintf((char *)buf, "%ld\r\n", raw);
+    sprintf((char *)buf, "%.ld\r\n", raw);
     HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
     /* USER CODE END WHILE */
 
@@ -298,22 +323,17 @@ void SystemClock_Config(void) {
   while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {
   }
 
+  /** Macro to configure the PLL clock source
+   */
+  __HAL_RCC_PLL_PLLSOURCE_CONFIG(RCC_PLLSOURCE_HSI);
+
   /** Initializes the RCC Oscillators according to the specified parameters
    * in the RCC_OscInitTypeDef structure.
    */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 9;
-  RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 1;
-  RCC_OscInitStruct.PLL.PLLR = 2;
-  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
-  RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOMEDIUM;
-  RCC_OscInitStruct.PLL.PLLFRACN = 3072;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
     Error_Handler();
   }
@@ -532,50 +552,50 @@ static void MX_USART2_UART_Init(void) {
 }
 
 /**
- * @brief SPI1 Initialization Function
+ * @brief SPI4 Initialization Function
  * @param None
  * @retval None
  */
-static void MX_SPI1_Init(void) {
+static void MX_SPI4_Init(void) {
 
-  /* USER CODE BEGIN SPI1_Init 0 */
+  /* USER CODE BEGIN SPI4_Init 0 */
 
-  /* USER CODE END SPI1_Init 0 */
+  /* USER CODE END SPI4_Init 0 */
 
-  /* USER CODE BEGIN SPI1_Init 1 */
+  /* USER CODE BEGIN SPI4_Init 1 */
 
-  /* USER CODE END SPI1_Init 1 */
-  /* SPI1 parameter configuration*/
-  hspi1.Instance = SPI1;
-  hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_HARD_OUTPUT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 0x0;
-  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
-  hspi1.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
-  hspi1.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
-  hspi1.Init.TxCRCInitializationPattern =
+  /* USER CODE END SPI4_Init 1 */
+  /* SPI4 parameter configuration*/
+  hspi4.Instance = SPI4;
+  hspi4.Init.Mode = SPI_MODE_MASTER;
+  hspi4.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi4.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi4.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi4.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi4.Init.NSS = SPI_NSS_SOFT;
+  hspi4.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+  hspi4.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi4.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi4.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi4.Init.CRCPolynomial = 0x0;
+  hspi4.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  hspi4.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
+  hspi4.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
+  hspi4.Init.TxCRCInitializationPattern =
       SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi1.Init.RxCRCInitializationPattern =
+  hspi4.Init.RxCRCInitializationPattern =
       SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi1.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
-  hspi1.Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
-  hspi1.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
-  hspi1.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
-  hspi1.Init.IOSwap = SPI_IO_SWAP_DISABLE;
-  if (HAL_SPI_Init(&hspi1) != HAL_OK) {
+  hspi4.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
+  hspi4.Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
+  hspi4.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
+  hspi4.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
+  hspi4.Init.IOSwap = SPI_IO_SWAP_DISABLE;
+  if (HAL_SPI_Init(&hspi4) != HAL_OK) {
     Error_Handler();
   }
-  /* USER CODE BEGIN SPI1_Init 2 */
+  /* USER CODE BEGIN SPI4_Init 2 */
 
-  /* USER CODE END SPI1_Init 2 */
+  /* USER CODE END SPI4_Init 2 */
 }
 
 /**
@@ -601,15 +621,27 @@ static void MX_DMA_Init(void) {
  * @retval None
  */
 static void MX_GPIO_Init(void) {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
 
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PE4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
