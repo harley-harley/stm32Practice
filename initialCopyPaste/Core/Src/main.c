@@ -18,11 +18,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stm32h7xx_hal_spi.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-char msg[] = "ahhhhhhh ahhhhhhhhhh ahh ah a\r\n";
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+
+char msg[] = "ahhhhhhh filled up bufffer\r\n";
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,8 +53,9 @@ DMA_HandleTypeDef hdma_adc1;
 I2C_HandleTypeDef hi2c1;
 
 UART_HandleTypeDef hlpuart1;
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
-DMA_HandleTypeDef hdma_usart2_tx;
+DMA_HandleTypeDef hdma_usart1_tx;
 
 SPI_HandleTypeDef hspi4;
 
@@ -78,6 +82,7 @@ static void MX_LPUART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_SPI4_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 void DMATransferComplete(DMA_HandleTypeDef *dma);
 /* USER CODE END PFP */
@@ -125,10 +130,11 @@ int main(void) {
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_SPI4_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_DMA_RegisterCallback(&hdma_usart2_tx, HAL_DMA_XFER_CPLT_CB_ID,
-                           &DMATransferComplete);
+  //   HAL_DMA_RegisterCallback(&hdma_usart2_tx, HAL_DMA_XFER_CPLT_CB_ID,
+  //                            &DMATransferComplete);
   HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buf, ADC_BUF_LEN);
 
   /* USER CODE END 2 */
@@ -168,8 +174,6 @@ int main(void) {
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-#include <stdio.h>
-#include <string.h>
 
   // To implement
   //   int8_t spi_status;
@@ -185,20 +189,20 @@ int main(void) {
   HAL_SPI_TransmitReceive(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER,
                           (uint8_t *)spi_buf, 2, 1000);
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
-  sprintf((char *)buf, "spi status 0x%x\r\n", (unsigned int)spi_buf[0]);
+  sprintf((char *)buf, "spi status 0x%x\r\n", (unsigned int)spi_buf[1]);
   HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
 
   // strcpy((char *)buf, "Hello!\r\n");
 
   //   uint8_t addr[4] = {0x00, 0x00, 0x00, 0x05};
   uint8_t wip = 1;
-  spi_buf[0] = 0xAB;
-  spi_buf[1] = 0xCD;
-  spi_buf[2] = 0xEF;
+  spi_buf[5] = 0xAB;
+  spi_buf[6] = 0xCD;
+  spi_buf[7] = 0xEF;
 
   sprintf((char *)buf, "spibuf before example 0x%x 0x%x 0x%x\r\n",
-          (unsigned int)spi_buf[0], (unsigned int)spi_buf[1],
-          (unsigned int)spi_buf[2]);
+          (unsigned int)spi_buf[5], (unsigned int)spi_buf[6],
+          (unsigned int)spi_buf[7]);
   HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
 
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
@@ -206,17 +210,17 @@ int main(void) {
   //   HAL_SPI_Transmit(&hspi4, (uint8_t *)addr, 4, 1000);
   //   HAL_SPI_Transmit(&hspi4, (uint8_t *)spi_buf, 3, 1000);
   uint8_t write_message[] = {MT25_WRITE, 0x00,       0x00,       0x00,
-                             0x05,       spi_buf[0], spi_buf[1], spi_buf[2]};
+                             0x05,       spi_buf[5], spi_buf[6], spi_buf[7]};
   HAL_SPI_Transmit(&hspi4, write_message, 8, 1000);
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
 
-  spi_buf[0] = 0x00;
-  spi_buf[1] = 0x00;
-  spi_buf[2] = 0x00;
+  spi_buf[5] = 0x00;
+  spi_buf[6] = 0x00;
+  spi_buf[7] = 0x00;
 
   sprintf((char *)buf, "spibuf cleared 0x%x 0x%x 0x%x\r\n",
-          (unsigned int)spi_buf[0], (unsigned int)spi_buf[1],
-          (unsigned int)spi_buf[2]);
+          (unsigned int)spi_buf[5], (unsigned int)spi_buf[6],
+          (unsigned int)spi_buf[7]);
   HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
 
   while (wip) {
@@ -227,7 +231,7 @@ int main(void) {
                             (uint8_t *)spi_buf, 2, 1000);
     HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
 
-    wip = spi_buf[0] & 0x01;
+    wip = spi_buf[1] & 0x01;
   }
 
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
@@ -243,24 +247,23 @@ int main(void) {
   HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
 
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_RESET);
-  HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
-  HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 1, 1000);
+  //   HAL_SPI_Transmit(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER, 1, 1000);
+  //   HAL_SPI_Receive(&hspi4, (uint8_t *)spi_buf, 1, 1000);
+  HAL_SPI_TransmitReceive(&hspi4, (uint8_t *)&MT25_READ_STATUS_REGISTER,
+                          (uint8_t *)spi_buf, 2, 1000);
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, GPIO_PIN_SET);
-  sprintf((char *)buf, "spi clear status 0x%x\r\n", spi_buf[0]);
+  sprintf((char *)buf, "spi clear status 0x%x\r\n", spi_buf[1]);
   HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
 
   static const uint8_t TMP103_ADDR = 0x70 << 1;
   static const uint8_t TEMP_REG = 0x00;
   // HAL_StatusTypeDef ret_status;
   // int16_t ret_val;
-  float temp_val;
 
   while (1) {
     buf[0] = TEMP_REG;
 
     huart2.Instance->CR3 |= USART_CR3_DMAT;
-    HAL_DMA_Start_IT(&hdma_usart2_tx, (uint32_t)msg,
-                     (uint32_t)&huart2.Instance->TDR, strlen(msg));
 
     // PROBABLY CHECK STATUS v
     if (HAL_I2C_Mem_Read(&hi2c1, TMP103_ADDR, TEMP_REG, I2C_MEMADD_SIZE_8BIT,
@@ -271,11 +274,9 @@ int main(void) {
     } else {
       int8_t ret_val;
       ret_val = (int8_t)buf[0];
+      //   HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
+      sprintf((char *)buf, "%i C\r\n", ret_val);
       HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
-      temp_val = ret_val;
-      temp_val *= 100;
-      sprintf((char *)buf, "%u.%.2u C\r\n", (unsigned int)temp_val / 100,
-              (unsigned int)temp_val % 100);
     }
 
     /* -- Sample board code for User push-button in interrupt mode ---- */
@@ -283,23 +284,27 @@ int main(void) {
       /* Update button state */
       BspButtonState = BUTTON_RELEASED;
       /* -- Sample board code to toggle leds ---- */
-      // BSP_LED_Toggle(LED_GREEN);
-      // BSP_LED_Toggle(LED_YELLOW);
-      // BSP_LED_Toggle(LED_RED);
+      BSP_LED_Toggle(LED_GREEN);
+      BSP_LED_Toggle(LED_YELLOW);
+      BSP_LED_Toggle(LED_RED);
 
       /* ..... Perform your action ..... */
     }
+
+    // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
+    // HAL_ADC_Start(&hadc1);
+    // HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+    // int32_t raw = HAL_ADC_GetValue(&hadc1);
+    // HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+    uint16_t raw = adc_buf[0];
+    // sprintf((char *)buf, "%" PRIu16 " V\r\n", raw);
+    uint32_t convert = ((uint32_t)raw * 3300) / 65536;
+    sprintf((char *)buf,
+            "%" PRIu32 "."
+            "%03" PRIu32 " V\r\n",
+            convert / 1000, convert % 1000);
     HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
 
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-    int32_t raw = HAL_ADC_GetValue(&hadc1);
-
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
-
-    sprintf((char *)buf, "%.ld\r\n", raw);
-    HAL_UART_Transmit(&huart2, buf, strlen((char *)buf), HAL_MAX_DELAY);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -412,7 +417,7 @@ static void MX_ADC1_Init(void) {
   sConfig.Channel = ADC_CHANNEL_10;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
-  sConfig.SingleDiff = ADC_DIFFERENTIAL_ENDED;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
   sConfig.OffsetSignedSaturation = DISABLE;
@@ -512,6 +517,50 @@ static void MX_LPUART1_UART_Init(void) {
 }
 
 /**
+ * @brief USART1 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_USART1_UART_Init(void) {
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK) {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart1, UART_TXFIFO_THRESHOLD_1_8) !=
+      HAL_OK) {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart1, UART_RXFIFO_THRESHOLD_1_8) !=
+      HAL_OK) {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart1) != HAL_OK) {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+}
+
+/**
  * @brief USART2 Initialization Function
  * @param None
  * @retval None
@@ -531,7 +580,7 @@ static void MX_USART2_UART_Init(void) {
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
   huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
   huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
@@ -608,15 +657,16 @@ static void MX_SPI4_Init(void) {
 static void MX_DMA_Init(void) {
 
   /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
   /* DMA1_Stream1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 }
 
 /**
@@ -657,15 +707,20 @@ void DMATransferComplete(DMA_HandleTypeDef *dma) {
   huart2.Instance->CR3 &= ~USART_CR3_DMAT;
 
   // BSP_LED_Toggle(LED_YELLOW);
-  HAL_GPIO_TogglePin(GPIOE, 1);
+  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 }
 
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) {
-  HAL_GPIO_WritePin(GPIOE, 1, GPIO_PIN_SET);
+  // LED 1
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
-  HAL_GPIO_WritePin(GPIOE, 1, GPIO_PIN_RESET);
+  // LED 1
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+
+  HAL_DMA_Start_IT(&hdma_usart1_tx, (uint32_t)msg,
+                   (uint32_t)&huart1.Instance->TDR, strlen(msg));
 }
 /* USER CODE END 4 */
 
