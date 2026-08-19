@@ -10,6 +10,7 @@ Intros
 https://www.youtube.com/playlist?list=PLEBQazB0HUyRYuzfi4clXsKUSgorErmBv
 https://www.youtube.com/playlist?list=PLfIJKC1ud8ghc4eFhI84z_3p3Ap2MCMV-
 https://www.youtube.com/playlist?list=PLfIJKC1ud8ggo4CF9yDSCNmB6MV6j4eJj
+https://embassy.dev/book/index.html
 
 Communication
 https://www.youtube.com/playlist?list=PLfIJKC1ud8gjmw-l5eDYfzzX5JI19lwhx
