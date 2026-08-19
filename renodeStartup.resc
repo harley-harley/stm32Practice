@@ -1,5 +1,8 @@
 include @platforms/boards/nucleo_h753zi.repl
-sysbus LoadELF @Projects/port/stm32Practice/initialCopyPaste/build/initialCopyPaste.elf
+# Not exactly sure why portable version is different from installed (dotnet?)
+# sysbus Tag <0x58024804, 0x58024804> "PWR_CSR1" 0x2000
+sysbus LoadELF @Documents/prof/stm32Practice/initialCopyPaste/build/initialCopyPaste.elf 
+# sysbus LoadELF @Projects/port/stm32Practice/initialCopyPaste/build/initialCopyPaste.elf
 machine LoadPlatformDescriptionFromString "tmp103: Sensors.TMP103 @ i2c1 0x70"
 machine LoadPlatformDescriptionFromString "mapped: Memory.MappedMemory { size: 0x00800000 }; mt25q: SPI.Micron_MT25Q @ spi4 { underlyingMemory: mapped }"
 
@@ -15,3 +18,4 @@ showAnalyzer sysbus.usart3
 
 sysbus.i2c1.tmp103 Temperature 21.0
 sysbus.adcM1S2.adcM1S2-channel10 Volts 2.2
+# sysbus.adcM1S2 FeedVoltageSampleToChannel 10 2200 0
