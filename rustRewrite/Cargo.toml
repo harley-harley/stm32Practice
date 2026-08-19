@@ -3,5 +3,14 @@ name = "rustRewrite"
 version = "0.1.0"
 edition = "2024"
 
+[build]
+target = "armv7r-none-eabi"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
 [dependencies]
-embassy-stm32 = {version = "0.6.0",  features = ["stm32h753zi"]}
+embassy-stm32 = {version = "0.6.0",  features = ["rt", "stm32h753zi", "memory-x"]}
